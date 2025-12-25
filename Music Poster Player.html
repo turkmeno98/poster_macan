@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="Слушай трек и закажи постер">
+    <meta property="og:title" content="Music Poster Player">
+    <meta property="og:image" content="poster.png">
+    <meta property="og:description" content="Слушай трек и закажи постер">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="theme-color" content="#E8D5C4">
+    <title>Music Poster Player</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>♪</text></svg>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #E8D5C4;
+            --primary-dark: #D4C1B0;
+            --text-color: #ffffff;
+            --text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --transition: 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            filter: blur(40px);
+            opacity: 0.3;
+            z-index: -2;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.3) 100%);
+            z-index: -1;
+        }
+
+        /* Preloader */
+        .preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+            animation: fadeOut 0.5s ease forwards 1.5s;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: var(--text-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        .preloader-text {
+            color: var(--text-color);
+            font-size: 16px;
+            letter-spacing: 2px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                pointer-events: none;
+            }
+        }
+
+        /* Container */
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            max-width: 480px;
+            width: 100%;
+            animation: slideUp 0.6s ease 0.3s both;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Poster Section */
+        .poster-section {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .poster {
+            width: 100%;
+            max-width: 320px;
+            aspect-ratio: 1;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            object-fit: cover;
+            animation: posterFadeIn 0.8s ease-in;
+        }
+
+        .poster.playing {
+            animation: posterPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes posterFadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes posterPulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.02);
+            }
+        }
+
+        /* Track Info */
+        .track-info {
+            text-align: center;
+            margin-top: 20px;
+            margin-bottom: 30px;
+            animation: fadeIn 0.5s ease 0.5s both;
+            max-width: 320px;
+        }
+
+        .track-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-shadow: var(--text-shadow);
+            letter-spacing: -0.5px;
+        }
+
+        .track-artist {
+            font-size: 16px;
+            opacity: 0.9;
+            text-shadow: var(--text-shadow);
+            font-weight: 300;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Player Glass */
+        .player {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: var(--glass-shadow);
+            padding: 24px;
+            width: 100%;
+            max-width: 320px;
+            animation: playerSlideIn 0.6s ease 0.3s both;
+        }
+
+        @keyframes playerSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            margin-bottom: 16px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: height var(--transition);
+        }
+
+        .progress-bar:hover {
+            height: 6px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--primary-dark));
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.1s linear;
+            box-shadow: 0 0 10px rgba(232, 213, 196, 0.6);
+        }
+
+        .progress-slider {
+            width: 12px;
+            height: 12px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 0%;
+            transform: translate(-50%, -50%);
+            cursor: grab;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transition: opacity var(--transition);
+        }
+
+        .progress-bar:hover .progress-slider {
+            opacity: 1;
+        }
+
+        /* Time Display */
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            opacity: 0.8;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Control Buttons */
+        .controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .btn-small {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: var(--text-color);
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition);
+            touch-action: manipulation;
+        }
+
+        .btn-small:hover,
+        .btn-small:focus {
+            background: rgba(255, 255, 255, 0.25);
+            transform: scale(1.05);
+            outline: none;
+        }
+
+        .btn-small:active {
+            transform: scale(0.95);
+        }
+
+        .btn-play {
+            width: 60px;
+            height: 60px;
+            background: var(--primary-color);
+            color: #333;
+            border: none;
+            font-size: 24px;
+            box-shadow: 0 8px 20px rgba(232, 213, 196, 0.4);
+        }
+
+        .btn-play:hover,
+        .btn-play:focus {
+            background: var(--primary-dark);
+            box-shadow: 0 12px 30px rgba(232, 213, 196, 0.6);
+        }
+
+        /* Volume Control */
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .volume-slider {
+            flex: 1;
+            height: 4px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: linear-gradient(to right, var(--primary-color), var(--primary-color)) no-repeat;
+            background-size: var(--value, 100%) 100%;
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            cursor: grab;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .volume-slider::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            cursor: grab;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            border: none;
+        }
+
+        .volume-icon {
+            width: 30px;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        /* Bottom Section */
+        .bottom-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            margin-top: 30px;
+            width: 100%;
+            max-width: 320px;
+            animation: fadeIn 0.5s ease 0.6s both;
+        }
+
+        /* Telegram Button */
+        .btn-telegram {
+            width: 100%;
+            padding: 14px 24px;
+            background: linear-gradient(135deg, #0088cc 0%, #005fa3 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all var(--transition);
+            box-shadow: 0 4px 15px rgba(0, 136, 204, 0.3);
+            text-decoration: none;
+            touch-action: manipulation;
+        }
+
+        .btn-telegram:hover,
+        .btn-telegram:focus {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(0, 136, 204, 0.5);
+            outline: none;
+        }
+
+        .btn-telegram:active {
+            transform: scale(0.98);
+        }
+
+        /* QR Code Section */
+        .qr-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .qr-container {
+            width: 120px;
+            height: 120px;
+            background: white;
+            padding: 8px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .qr-container:hover,
+        .qr-container:focus {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            outline: 2px solid var(--primary-color);
+            outline-offset: 4px;
+        }
+
+        #qrcode {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .qr-label {
+            font-size: 12px;
+            opacity: 0.8;
+            text-align: center;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px 20px;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            max-width: 90vw;
+            animation: slideUp 0.3s ease;
+        }
+
+        .modal-qr {
+            width: 250px;
+            height: 250px;
+            background: white;
+            padding: 12px;
+            border-radius: 12px;
+        }
+
+        .modal-qr #qrcode {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .btn-close-modal {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #f0f0f0;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+            transition: all var(--transition);
+        }
+
+        .btn-close-modal:hover {
+            background: #e0e0e0;
+            transform: rotate(90deg);
+        }
+
+        /* Error Message */
+        .error-message {
+            background: rgba(255, 76, 76, 0.2);
+            border: 1px solid rgba(255, 76, 76, 0.5);
+            color: #ffcccc;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+            animation: slideUp 0.3s ease;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .poster {
+                max-width: 280px;
+            }
+
+            .player {
+                max-width: 280px;
+            }
+
+            .track-title {
+                font-size: 20px;
+            }
+
+            .track-artist {
+                font-size: 14px;
+            }
+
+            .btn-telegram {
+                font-size: 13px;
+                padding: 12px 20px;
+            }
+
+            .bottom-section {
+                max-width: 280px;
+            }
+        }
+
+        /* Prevent landscape */
+        @media (orientation: landscape) {
+            body {
+                flex-wrap: wrap;
+                padding: 10px;
+            }
+
+            .container {
+                max-width: 100vw;
+                padding: 10px;
+            }
+
+            .poster {
+                max-width: 120px;
+                margin-right: 20px;
+            }
+
+            .player {
+                max-width: 280px;
+            }
+        }
+
+        /* Print styles */
+        @media print {
+            .preloader,
+            .player,
+            .btn-telegram,
+            .qr-section {
+                display: none;
+            }
+        }
+
+        /* Dark mode */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --glass-bg: rgba(0, 0, 0, 0.2);
+            }
+
+            .modal-content {
+                background: #222;
+                color: white;
+            }
+
+            .btn-close-modal {
+                background: #333;
+                color: white;
+            }
+
+            .btn-close-modal:hover {
+                background: #444;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Preloader -->
+    <div class="preloader">
+        <div class="spinner"></div>
+        <div class="preloader-text">ЗАГРУЗКА...</div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Poster Section -->
+        <section class="poster-section">
+            <img id="poster" class="poster" alt="Music Poster" crossorigin="anonymous">
+        </section>
+
+        <!-- Track Info -->
+        <section class="track-info">
+            <h1 class="track-title" id="trackTitle"></h1>
+            <p class="track-artist" id="trackArtist"></p>
+        </section>
+
+        <!-- Error Message -->
+        <div class="error-message" id="errorMessage"></div>
+
+        <!-- Player -->
+        <section class="player">
+            <!-- Progress Bar -->
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                    <div class="progress-slider" id="progressSlider"></div>
+                </div>
+            </div>
+
+            <!-- Time Display -->
+            <div class="time-display">
+                <span id="currentTime">0:00</span>
+                <span id="duration">0:00</span>
+            </div>
+
+            <!-- Controls -->
+            <div class="controls">
+                <button class="btn-small" id="btnBack10" title="Вернуться на 10 сек">
+                    <i class="fas fa-redo"></i>
+                </button>
+                <button class="btn-play" id="btnPlay" title="Воспроизвести">
+                    <i class="fas fa-play"></i>
+                </button>
+                <button class="btn-small" id="btnForward10" title="Вперед на 10 сек">
+                    <i class="fas fa-redo fa-flip-horizontal"></i>
+                </button>
+            </div>
+
+            <!-- Volume Control -->
+            <div class="volume-control">
+                <span class="volume-icon" id="volumeIcon"><i class="fas fa-volume-up"></i></span>
+                <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="100" title="Громкость">
+            </div>
+        </section>
+
+        <!-- Bottom Section -->
+        <div class="bottom-section">
+            <!-- Telegram Button -->
+            <a id="telegramBtn" class="btn-telegram" target="_blank" rel="noopener noreferrer">
+                <i class="fab fa-telegram"></i>
+                <span>Заказать постер в Telegram</span>
+            </a>
+
+            <!-- QR Code Section -->
+            <div class="qr-section">
+                <div class="qr-container" id="qrTrigger">
+                    <div id="qrcode"></div>
+                </div>
+                <div class="qr-label">Поделиться страницей</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for QR -->
+    <div class="modal" id="qrModal">
+        <div class="modal-content">
+            <button class="btn-close-modal" id="closeModal">&times;</button>
+            <div class="modal-qr">
+                <div id="qrcodeModal"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio Element -->
+    <audio id="audioPlayer" crossorigin="anonymous"></audio>
+
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://chir.ag/projects/ntc/ntc.js"></script>
+
+    <!-- Config -->
+    <script>
+        const config = {
+            artist: "OBLADAET",
+            trackName: "MONSTER TRAAK",
+            posterImage: "poster.png",
+            audioFile: "track.mp3",
+            telegramContact: "your_username",
+            backgroundColor: "#E8D5C4"
+        };
+    </script>
+
+    <!-- Main Script -->
+    <script>
+        // Elements
+        const audioPlayer = document.getElementById('audioPlayer');
+        const posterImg = document.getElementById('poster');
+        const trackTitleEl = document.getElementById('trackTitle');
+        const trackArtistEl = document.getElementById('trackArtist');
+        const btnPlay = document.getElementById('btnPlay');
+        const btnBack10 = document.getElementById('btnBack10');
+        const btnForward10 = document.getElementById('btnForward10');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const progressSlider = document.getElementById('progressSlider');
+        const currentTimeEl = document.getElementById('currentTime');
+        const durationEl = document.getElementById('duration');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const volumeIcon = document.getElementById('volumeIcon');
+        const telegramBtn = document.getElementById('telegramBtn');
+        const qrTrigger = document.getElementById('qrTrigger');
+        const qrModal = document.getElementById('qrModal');
+        const closeModal = document.getElementById('closeModal');
+        const errorMessage = document.getElementById('errorMessage');
+
+        // Initialize
+        function init() {
+            // Set content from config
+            trackTitleEl.textContent = config.trackName;
+            trackArtistEl.textContent = config.artist;
+            posterImg.src = config.posterImage;
+            audioPlayer.src = config.audioFile;
+            telegramBtn.href = `https://t.me/${config.telegramContact}`;
+
+            // Set background color
+            document.documentElement.style.setProperty('--primary-color', config.backgroundColor);
+            document.body.style.backgroundImage = `url('${config.posterImage}')`;
+
+            // Load QR code
+            generateQRCode();
+
+            // Event listeners
+            btnPlay.addEventListener('click', togglePlay);
+            btnBack10.addEventListener('click', () => skip(-10));
+            btnForward10.addEventListener('click', () => skip(10));
+            audioPlayer.addEventListener('play', handlePlay);
+            audioPlayer.addEventListener('pause', handlePause);
+            audioPlayer.addEventListener('timeupdate', updateProgress);
+            audioPlayer.addEventListener('loadedmetadata', updateDuration);
+            audioPlayer.addEventListener('ended', handleEnded);
+            audioPlayer.addEventListener('error', handleAudioError);
+            progressBar.addEventListener('click', seek);
+            volumeSlider.addEventListener('input', changeVolume);
+            qrTrigger.addEventListener('click', openQRModal);
+            closeModal.addEventListener('click', closeQRModal);
+            qrModal.addEventListener('click', (e) => {
+                if (e.target === qrModal) closeQRModal();
+            });
+
+            // Hide preloader
+            document.querySelector('.preloader').style.display = 'none';
+        }
+
+        // Play/Pause
+        function togglePlay() {
+            if (audioPlayer.paused) {
+                audioPlayer.play().catch(err => {
+                    showError('Ошибка воспроизведения: ' + err.message);
+                });
+            } else {
+                audioPlayer.pause();
+            }
+        }
+
+        function handlePlay() {
+            btnPlay.innerHTML = '<i class="fas fa-pause"></i>';
+            posterImg.classList.add('playing');
+        }
+
+        function handlePause() {
+            btnPlay.innerHTML = '<i class="fas fa-play"></i>';
+            posterImg.classList.remove('playing');
+        }
+
+        function handleEnded() {
+            audioPlayer.currentTime = 0;
+            handlePause();
+        }
+
+        // Skip
+        function skip(seconds) {
+            audioPlayer.currentTime = Math.max(0, Math.min(audioPlayer.duration, audioPlayer.currentTime + seconds));
+        }
+
+        // Progress
+        function updateProgress() {
+            const percent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+            progressFill.style.width = percent + '%';
+            progressSlider.style.left = percent + '%';
+            currentTimeEl.textContent = formatTime(audioPlayer.currentTime);
+        }
+
+        function updateDuration() {
+            durationEl.textContent = formatTime(audioPlayer.duration);
+        }
+
+        function seek(e) {
+            const rect = progressBar.getBoundingClientRect();
+            const percent = (e.clientX - rect.left) / rect.width;
+            audioPlayer.currentTime = percent * audioPlayer.duration;
+        }
+
+        function formatTime(seconds) {
+            if (!seconds || isNaN(seconds)) return '0:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Volume
+        function changeVolume(e) {
+            const volume = e.target.value / 100;
+            audioPlayer.volume = volume;
+            updateVolumeIcon(volume);
+            e.target.style.setProperty('--value', e.target.value + '%');
+        }
+
+        function updateVolumeIcon(volume) {
+            let icon = 'fa-volume-up';
+            if (volume === 0) icon = 'fa-volume-mute';
+            else if (volume < 0.5) icon = 'fa-volume-down';
+            volumeIcon.innerHTML = `<i class="fas ${icon}"></i>`;
+        }
+
+        // QR Code
+        function generateQRCode() {
+            new QRCode(document.getElementById('qrcode'), {
+                text: window.location.href,
+                width: 120,
+                height: 120,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+
+        function openQRModal() {
+            document.getElementById('qrcodeModal').innerHTML = '';
+            new QRCode(document.getElementById('qrcodeModal'), {
+                text: window.location.href,
+                width: 250,
+                height: 250,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            qrModal.classList.add('active');
+        }
+
+        function closeQRModal() {
+            qrModal.classList.remove('active');
+        }
+
+        // Error handling
+        function handleAudioError(e) {
+            const errorCode = audioPlayer.error.code;
+            const errorMsg = {
+                1: 'Загрузка аудио отменена',
+                2: 'Ошибка сети при загрузке',
+                3: 'Декодирование аудио прервано',
+                4: 'Формат аудио не поддерживается'
+            }[errorCode] || 'Неизвестная ошибка';
+            showError(errorMsg);
+        }
+
+        function showError(msg) {
+            errorMessage.textContent = msg;
+            errorMessage.classList.add('show');
+            setTimeout(() => errorMessage.classList.remove('show'), 5000);
+        }
+
+        // Initialize on load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+
+        // Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(() => {
+                // Service Worker not required
+            });
+        }
+    </script>
+</body>
+</html>
