@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR Poster - Macan</title>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        /* Инструкции */
+        .ar-instructions {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 50%, transparent 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            z-index: 1000;
+            pointer-events: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .ar-instructions h1 {
+            margin: 0 0 10px 0;
+            font-size: 24px;
+            font-weight: 700;
+            color: #1DB954;
+            text-shadow: 0 2px 10px rgba(29, 185, 84, 0.5);
+        }
+
+        .ar-instructions p {
+            margin: 5px 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .camera-icon {
+            font-size: 48px;
+            margin: 10px 0;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        /* Кнопка открыть плеер */
+        .open-player-btn {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1DB954;
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            z-index: 1001;
+            box-shadow: 0 4px 20px rgba(29, 185, 84, 0.4);
+            display: none;
+            pointer-events: auto;
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateX(-50%) translateY(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .open-player-btn.visible {
+            display: block;
+        }
+
+        .open-player-btn:hover {
+            background: #1ed760;
+            transform: translateX(-50%) scale(1.05);
+        }
+
+        .open-player-btn:active {
+            transform: translateX(-50%) scale(0.98);
+        }
+
+        /* Загрузка камеры */
+        .camera-loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 999;
+            color: white;
+            text-align: center;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(29, 185, 84, 0.3);
+            border-top-color: #1DB954;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* AR Canvas */
+        a-scene {
+            width: 100%;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <!-- Инструкции -->
+    <div class="ar-instructions">
+        <h1>🎵 AR Music Poster</h1>
+        <div class="camera-icon">📷</div>
+        <p><strong>Наведи камеру на постер Macan - "Заново"</strong></p>
+        <p>Разрешите доступ к камере для начала</p>
+    </div>
+
+    <!-- Загрузка -->
+    <div class="camera-loading" id="loading">
+        <div class="spinner"></div>
+        <p>Инициализация камеры...</p>
+    </div>
+
+    <!-- Кнопка открыть плеер -->
+    <button class="open-player-btn" id="openPlayerBtn">
+        🎵 Открыть плеер
+    </button>
+
+    <!-- AR Scene -->
+    <a-scene
+        embedded
+        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+        vr-mode-ui="enabled: false"
+        renderer="logarithmicDepthBuffer: true; precision: medium;"
+        id="arScene"
+    >
+        <!-- Камера -->
+        <a-entity camera></a-entity>
+
+        <!-- Marker (используем Hiro пока, потом заменим на твой постер) -->
+        <a-marker preset="hiro" id="marker">
+            <!-- 3D текст над постером -->
+            <a-text
+                value="MACAN\nЗАНОВО"
+                align="center"
+                color="#1DB954"
+                width="6"
+                position="0 1.5 0"
+                rotation="-90 0 0"
+                animation="property: position; to: 0 2 0; dur: 2000; easing: easeInOutSine; loop: true; dir: alternate"
+            ></a-text>
+
+            <!-- Иконка музыки -->
+            <a-box
+                position="0 0.5 0"
+                rotation="0 45 0"
+                color="#1DB954"
+                scale="0.5 0.5 0.5"
+                animation="property: rotation; to: 0 405 0; dur: 4000; easing: linear; loop: true"
+            ></a-box>
+
+            <!-- Плоскость с логотипом/текстом -->
+            <a-plane
+                position="0 0 0"
+                rotation="-90 0 0"
+                width="2"
+                height="2"
+                color="#000000"
+                opacity="0.7"
+            ></a-plane>
+        </a-marker>
+    </a-scene>
+
+    <script>
+        // Элементы
+        const loading = document.getElementById('loading');
+        const openPlayerBtn = document.getElementById('openPlayerBtn');
+        const marker = document.getElementById('marker');
+        const arScene = document.getElementById('arScene');
+
+        // Скрыть загрузку когда камера готова
+        arScene.addEventListener('loaded', () => {
+            setTimeout(() => {
+                loading.style.display = 'none';
+            }, 1000);
+        });
+
+        // Показать кнопку когда маркер найден
+        marker.addEventListener('markerFound', () => {
+            console.log('Marker found!');
+            openPlayerBtn.classList.add('visible');
+            
+            // Вибрация если доступна
+            if (navigator.vibrate) {
+                navigator.vibrate(200);
+            }
+        });
+
+        // Скрыть кнопку когда маркер потерян
+        marker.addEventListener('markerLost', () => {
+            console.log('Marker lost!');
+            openPlayerBtn.classList.remove('visible');
+        });
+
+        // Открыть плеер
+        openPlayerBtn.addEventListener('click', () => {
+            // Открыть твой музыкальный сайт
+            window.location.href = './index.html';
+            
+            // Или открыть в новой вкладке:
+            // window.open('./index.html', '_blank');
+        });
+
+        // Обработка ошибок камеры
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(() => {
+                console.log('Camera access granted');
+            })
+            .catch((err) => {
+                console.error('Camera access denied:', err);
+                loading.innerHTML = '<p style="color: #ff4444;">❌ Не удалось получить доступ к камере</p><p>Пожалуйста, разрешите доступ в настройках браузера</p>';
+            });
+
+        // Автоматическая ориентация
+        if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('portrait').catch(() => {
+                console.log('Screen orientation lock not supported');
+            });
+        }
+    </script>
+</body>
+</html>
