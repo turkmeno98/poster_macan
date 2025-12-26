@@ -2,14 +2,25 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>AR Poster - Macan Заново</title>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <style>
-        body {
+        * {
             margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
             overflow: hidden;
+            position: fixed;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
@@ -128,10 +139,19 @@
             to { transform: rotate(360deg); }
         }
 
-        /* AR Canvas */
+        /* AR Canvas - КРИТИЧНО ДЛЯ ПРАВИЛЬНОГО МАСШТАБА */
         a-scene {
-            width: 100%;
-            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 0;
+        }
+
+        .a-canvas {
+            width: 100% !important;
+            height: 100% !important;
         }
 
         /* Статус */
@@ -184,16 +204,16 @@
     <!-- AR Scene -->
     <a-scene
         embedded
-        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3; sourceWidth: 1280; sourceHeight: 960; displayWidth: 1280; displayHeight: 960;"
+        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3; sourceWidth: 1920; sourceHeight: 1080; displayWidth: 1920; displayHeight: 1080; videoTexture: true;"
         vr-mode-ui="enabled: false"
-        renderer="logarithmicDepthBuffer: true; precision: medium; antialias: true;"
+        renderer="logarithmicDepthBuffer: true; precision: medium; antialias: true; alpha: true;"
         id="arScene"
     >
         <!-- Камера -->
-        <a-entity camera></a-entity>
+        <a-entity camera look-controls-enabled="false" wasd-controls-enabled="false"></a-entity>
 
         <!-- Custom Marker (твой постер) -->
-        <a-marker type="pattern" url="./pattern-poster.patt" id="marker">
+        <a-marker type="pattern" url="./pattern-poster.patt" id="marker" smooth="true" smoothCount="10" smoothTolerance="0.01" smoothThreshold="5">
             <!-- 3D текст над постером -->
             <a-text
                 value="MACAN\nЗАНОВО"
@@ -234,25 +254,30 @@
         const marker = document.getElementById('marker');
         const arScene = document.getElementById('arScene');
 
-        // Запрос высокого разрешения камеры
-        navigator.mediaDevices.getUserMedia({
+        // Запрос максимального разрешения камеры
+        const constraints = {
             video: {
                 facingMode: 'environment',
-                width: { ideal: 1280 },
-                height: { ideal: 960 }
+                width: { ideal: 1920, max: 1920 },
+                height: { ideal: 1080, max: 1080 },
+                aspectRatio: { ideal: 16/9 }
             }
-        }).then(() => {
-            console.log('High resolution camera access granted');
-        }).catch((err) => {
-            console.error('Camera access denied:', err);
-            loading.innerHTML = '<p style="color: #ff4444;">❌ Не удалось получить доступ к камере</p><p>Пожалуйста, разрешите доступ в настройках браузера</p>';
-        });
+        };
+
+        navigator.mediaDevices.getUserMedia(constraints)
+            .then(() => {
+                console.log('Full HD camera access granted');
+            })
+            .catch((err) => {
+                console.error('Camera access denied:', err);
+                loading.innerHTML = '<p style="color: #ff4444;">❌ Не удалось получить доступ к камере</p><p>Пожалуйста, разрешите доступ в настройках браузера</p>';
+            });
 
         // Скрыть загрузку когда камера готова
         arScene.addEventListener('loaded', () => {
             setTimeout(() => {
                 loading.style.display = 'none';
-            }, 1000);
+            }, 1500);
         });
 
         // Показать кнопку когда маркер найден
@@ -276,12 +301,19 @@
 
         // Открыть плеер
         openPlayerBtn.addEventListener('click', () => {
-            // Открыть твой музыкальный сайт
             window.location.href = './index.html';
-            
-            // Или открыть в новой вкладке:
-            // window.open('./index.html', '_blank');
         });
+
+        // Предотвратить зум
+        document.addEventListener('gesturestart', function (e) {
+            e.preventDefault();
+        });
+
+        document.addEventListener('touchmove', function (e) {
+            if (e.touches.length > 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
 
         // Автоматическая ориентация
         if (screen.orientation && screen.orientation.lock) {
