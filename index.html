@@ -82,6 +82,7 @@
                         0 0 0 1px rgba(255, 255, 255, 0.05) inset;
             position: relative;
             overflow: hidden;
+            margin-bottom: 20px;
         }
 
         .poster-card::before {
@@ -362,6 +363,94 @@
             animation-play-state: paused;
         }
 
+        /* Lyrics Section */
+        .lyrics-section {
+            background: linear-gradient(145deg, #2a2a2a, #1f1f1f);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5),
+                        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+            margin-bottom: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        .lyrics-section::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .lyrics-section::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        .lyrics-section::-webkit-scrollbar-thumb {
+            background: var(--accent-color);
+            border-radius: 4px;
+        }
+
+        .lyrics-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .lyrics-icon {
+            width: 36px;
+            height: 36px;
+            background: rgba(29, 185, 84, 0.15);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-color);
+            font-size: 18px;
+        }
+
+        .lyrics-title {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+        }
+
+        .lyrics-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .lyric-line {
+            font-size: 16px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .lyric-line:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .lyric-line.active {
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 18px;
+            background: rgba(29, 185, 84, 0.1);
+            border-left: 3px solid var(--accent-color);
+            padding-left: 16px;
+            transform: translateX(4px);
+        }
+
+        .lyric-line.passed {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
         /* QR Modal */
         .qr-modal {
             display: none;
@@ -460,12 +549,24 @@
                 padding: 30px 24px;
             }
 
+            .lyrics-section {
+                padding: 24px 20px;
+            }
+
             .track-name {
                 font-size: 24px;
             }
 
             .artist-name {
                 font-size: 16px;
+            }
+
+            .lyric-line {
+                font-size: 15px;
+            }
+
+            .lyric-line.active {
+                font-size: 17px;
             }
         }
 
@@ -588,6 +689,19 @@
                 <span>Поделиться QR-кодом</span>
             </button>
         </div>
+
+        <!-- Lyrics Section -->
+        <div class="lyrics-section" id="lyricsSection">
+            <div class="lyrics-header">
+                <div class="lyrics-icon">
+                    <i class="fas fa-align-left"></i>
+                </div>
+                <div class="lyrics-title">Текст песни</div>
+            </div>
+            <div class="lyrics-container" id="lyricsContainer">
+                <!-- Lyrics will be inserted here -->
+            </div>
+        </div>
     </div>
 
     <!-- QR Modal -->
@@ -614,11 +728,28 @@
         /* НАСТРОЙКИ ТРЕКА - ИЗМЕНИ ЗДЕСЬ */
         /* ============================================ */
         const CONFIG = {
-            trackName: "Заново",      // Название трека
-            artistName: "Macan",              // Исполнитель
-            albumCover: "poster.png",         // Путь к обложке
-            audioFile: "track.mp3"            // Путь к аудио файлу
+            trackName: "Заново",
+            artistName: "Macan",
+            albumCover: "poster.png",
+            audioFile: "track.mp3"
         };
+
+        /* ТЕКСТ ПЕСНИ С ВРЕМЕННЫМИ МЕТКАМИ */
+        /* Формат: [секунды, "текст строки"] */
+        const LYRICS = [
+            [0, "Вступление..."],
+            [5, "Первая строка песни"],
+            [10, "Вторая строка песни"],
+            [15, "Третья строка песни"],
+            [20, "Припев начинается здесь"],
+            [25, "Продолжение припева"],
+            [30, "И так далее..."],
+            [35, "Второй куплет"],
+            [40, "Еще одна строка"],
+            [45, "И еще одна"],
+            [50, "Припев снова"],
+            [55, "Последняя строка"]
+        ];
         /* ============================================ */
     </script>
 
@@ -641,6 +772,8 @@
         const spotifyCode = document.getElementById('spotifyCode');
         const canvas = document.getElementById('particles');
         const ctx = canvas.getContext('2d');
+        const lyricsContainer = document.getElementById('lyricsContainer');
+        const lyricsSection = document.getElementById('lyricsSection');
 
         // Set track info from config
         document.getElementById('trackName').textContent = CONFIG.trackName;
@@ -650,6 +783,59 @@
 
         // Set initial volume
         audio.volume = volumeSlider.value / 100;
+
+        // Initialize lyrics
+        let currentLyricIndex = -1;
+        function initLyrics() {
+            lyricsContainer.innerHTML = '';
+            LYRICS.forEach((lyric, index) => {
+                const line = document.createElement('div');
+                line.className = 'lyric-line';
+                line.textContent = lyric[1];
+                line.dataset.time = lyric[0];
+                line.dataset.index = index;
+                
+                // Click to seek
+                line.addEventListener('click', () => {
+                    audio.currentTime = lyric[0];
+                });
+                
+                lyricsContainer.appendChild(line);
+            });
+        }
+
+        // Update active lyric
+        function updateLyrics(currentTime) {
+            const lines = document.querySelectorAll('.lyric-line');
+            let activeIndex = -1;
+
+            // Find current lyric
+            for (let i = LYRICS.length - 1; i >= 0; i--) {
+                if (currentTime >= LYRICS[i][0]) {
+                    activeIndex = i;
+                    break;
+                }
+            }
+
+            // Update if changed
+            if (activeIndex !== currentLyricIndex) {
+                currentLyricIndex = activeIndex;
+                
+                lines.forEach((line, index) => {
+                    line.classList.remove('active', 'passed');
+                    
+                    if (index === activeIndex) {
+                        line.classList.add('active');
+                        // Auto scroll to active line
+                        line.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else if (index < activeIndex) {
+                        line.classList.add('passed');
+                    }
+                });
+            }
+        }
+
+        initLyrics();
 
         // Particles
         let particles = [];
@@ -722,6 +908,9 @@
             const percent = (audio.currentTime / audio.duration) * 100;
             progressFill.style.width = percent + '%';
             currentTimeEl.textContent = formatTime(audio.currentTime);
+            
+            // Update lyrics
+            updateLyrics(audio.currentTime);
         });
 
         audio.addEventListener('loadedmetadata', () => {
