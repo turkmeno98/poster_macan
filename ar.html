@@ -184,9 +184,9 @@
     <!-- AR Scene -->
     <a-scene
         embedded
-        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3; sourceWidth: 1280; sourceHeight: 960; displayWidth: 1280; displayHeight: 960;"
         vr-mode-ui="enabled: false"
-        renderer="logarithmicDepthBuffer: true; precision: medium;"
+        renderer="logarithmicDepthBuffer: true; precision: medium; antialias: true;"
         id="arScene"
     >
         <!-- Камера -->
@@ -234,6 +234,20 @@
         const marker = document.getElementById('marker');
         const arScene = document.getElementById('arScene');
 
+        // Запрос высокого разрешения камеры
+        navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: 'environment',
+                width: { ideal: 1280 },
+                height: { ideal: 960 }
+            }
+        }).then(() => {
+            console.log('High resolution camera access granted');
+        }).catch((err) => {
+            console.error('Camera access denied:', err);
+            loading.innerHTML = '<p style="color: #ff4444;">❌ Не удалось получить доступ к камере</p><p>Пожалуйста, разрешите доступ в настройках браузера</p>';
+        });
+
         // Скрыть загрузку когда камера готова
         arScene.addEventListener('loaded', () => {
             setTimeout(() => {
@@ -268,16 +282,6 @@
             // Или открыть в новой вкладке:
             // window.open('./index.html', '_blank');
         });
-
-        // Обработка ошибок камеры
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then(() => {
-                console.log('Camera access granted');
-            })
-            .catch((err) => {
-                console.error('Camera access denied:', err);
-                loading.innerHTML = '<p style="color: #ff4444;">❌ Не удалось получить доступ к камере</p><p>Пожалуйста, разрешите доступ в настройках браузера</p>';
-            });
 
         // Автоматическая ориентация
         if (screen.orientation && screen.orientation.lock) {
