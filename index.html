@@ -83,6 +83,7 @@
             position: relative;
             overflow: hidden;
             margin-bottom: 20px;
+            transition: all 0.4s ease;
         }
 
         .poster-card::before {
@@ -100,6 +101,33 @@
         @keyframes rotate {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
+        }
+
+        /* Hide/Show sections */
+        .poster-content {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .poster-content.hidden {
+            opacity: 0;
+            transform: scale(0.95);
+            pointer-events: none;
+            position: absolute;
+        }
+
+        .lyrics-content {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            opacity: 0;
+            transform: scale(0.95);
+            pointer-events: none;
+            display: none;
+        }
+
+        .lyrics-content.active {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+            display: block;
         }
 
         /* Album Cover */
@@ -363,29 +391,24 @@
             animation-play-state: paused;
         }
 
-        /* Lyrics Section */
-        .lyrics-section {
-            background: linear-gradient(145deg, #2a2a2a, #1f1f1f);
-            border-radius: 16px;
-            padding: 30px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5),
-                        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
-            margin-bottom: 20px;
-            max-height: 400px;
+        /* Lyrics in Card */
+        .lyrics-card-container {
+            max-height: 500px;
             overflow-y: auto;
             scroll-behavior: smooth;
+            padding-right: 10px;
         }
 
-        .lyrics-section::-webkit-scrollbar {
+        .lyrics-card-container::-webkit-scrollbar {
             width: 8px;
         }
 
-        .lyrics-section::-webkit-scrollbar-track {
+        .lyrics-card-container::-webkit-scrollbar-track {
             background: rgba(255, 255, 255, 0.05);
             border-radius: 4px;
         }
 
-        .lyrics-section::-webkit-scrollbar-thumb {
+        .lyrics-card-container::-webkit-scrollbar-thumb {
             background: var(--accent-color);
             border-radius: 4px;
         }
@@ -449,6 +472,37 @@
 
         .lyric-line.passed {
             color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Lyrics Toggle Button */
+        .lyrics-toggle-btn {
+            width: 100%;
+            padding: 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            margin-bottom: 12px;
+        }
+
+        .lyrics-toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+        }
+
+        .lyrics-toggle-btn.active {
+            background: rgba(29, 185, 84, 0.15);
+            border-color: var(--accent-color);
+            color: var(--accent-color);
         }
 
         /* QR Modal */
@@ -534,7 +588,6 @@
             justify-content: center;
             gap: 8px;
             transition: all 0.2s ease;
-            margin-top: 20px;
         }
 
         .share-btn:hover {
@@ -547,10 +600,6 @@
         @media (max-width: 600px) {
             .poster-card {
                 padding: 30px 24px;
-            }
-
-            .lyrics-section {
-                padding: 24px 20px;
             }
 
             .track-name {
@@ -618,89 +667,100 @@
     <!-- Main Container -->
     <div class="container">
         <div class="poster-card">
-            <!-- Album Cover -->
-            <div class="album-cover">
-                <img id="albumCover" src="poster.png" alt="Album Cover">
-            </div>
-
-            <!-- Track Info -->
-            <div class="track-info">
-                <div class="track-name" id="trackName">Загрузка...</div>
-                <div class="artist-name" id="artistName">Загрузка...</div>
-            </div>
-
-            <!-- Progress -->
-            <div class="progress-section">
-                <div class="progress-bar" id="progressBar">
-                    <div class="progress-fill" id="progressFill"></div>
+            <!-- Poster Content -->
+            <div class="poster-content" id="posterContent">
+                <!-- Album Cover -->
+                <div class="album-cover">
+                    <img id="albumCover" src="poster.png" alt="Album Cover">
                 </div>
-                <div class="time-info">
-                    <span id="currentTime">0:00</span>
-                    <span id="duration">0:00</span>
+
+                <!-- Track Info -->
+                <div class="track-info">
+                    <div class="track-name" id="trackName">Загрузка...</div>
+                    <div class="artist-name" id="artistName">Загрузка...</div>
+                </div>
+
+                <!-- Progress -->
+                <div class="progress-section">
+                    <div class="progress-bar" id="progressBar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="time-info">
+                        <span id="currentTime">0:00</span>
+                        <span id="duration">0:00</span>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="controls">
+                    <button class="control-btn" id="prevBtn" title="Назад 10 сек">
+                        <i class="fas fa-backward"></i>
+                    </button>
+                    <button class="control-btn play-btn" id="playBtn" title="Воспроизвести">
+                        <i class="fas fa-play"></i>
+                    </button>
+                    <button class="control-btn" id="nextBtn" title="Вперед 10 сек">
+                        <i class="fas fa-forward"></i>
+                    </button>
+                </div>
+
+                <!-- Volume -->
+                <div class="volume-section">
+                    <i class="fas fa-volume-up volume-icon" id="volumeIcon"></i>
+                    <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="70">
+                </div>
+
+                <!-- Spotify Code Visualization -->
+                <div class="spotify-code paused" id="spotifyCode">
+                    <div class="code-icon">
+                        <i class="fab fa-spotify"></i>
+                    </div>
+                    <div class="code-bars">
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Controls -->
-            <div class="controls">
-                <button class="control-btn" id="prevBtn" title="Назад 10 сек">
-                    <i class="fas fa-backward"></i>
-                </button>
-                <button class="control-btn play-btn" id="playBtn" title="Воспроизвести">
-                    <i class="fas fa-play"></i>
-                </button>
-                <button class="control-btn" id="nextBtn" title="Вперед 10 сек">
-                    <i class="fas fa-forward"></i>
-                </button>
-            </div>
-
-            <!-- Volume -->
-            <div class="volume-section">
-                <i class="fas fa-volume-up volume-icon" id="volumeIcon"></i>
-                <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="70">
-            </div>
-
-            <!-- Spotify Code Visualization -->
-            <div class="spotify-code paused" id="spotifyCode">
-                <div class="code-icon">
-                    <i class="fab fa-spotify"></i>
+            <!-- Lyrics Content (hidden by default) -->
+            <div class="lyrics-content" id="lyricsContent">
+                <div class="lyrics-header">
+                    <div class="lyrics-icon">
+                        <i class="fas fa-align-left"></i>
+                    </div>
+                    <div class="lyrics-title">Текст песни</div>
                 </div>
-                <div class="code-bars">
-                    <div class="bar"></div>
-                    <div class="bar"></div>
-                    <div class="bar"></div>
-                    <div class="bar"></div>
-                    <div class="bar"></div>
-                    <div class="bar"></div>
-                    <div class="bar"></div>
-                    <div class="bar"></div>
-                    <div class="bar"></div>
-                    <div class="bar"></div>
-                    <div class="bar"></div>
-                    <div class="bar"></div>
-                    <div class="bar"></div>
-                    <div class="bar"></div>
-                    <div class="bar"></div>
+                <div class="lyrics-card-container">
+                    <div class="lyrics-container" id="lyricsContainer">
+                        <!-- Lyrics will be inserted here -->
+                    </div>
                 </div>
             </div>
+
+            <!-- Lyrics Toggle Button -->
+            <button class="lyrics-toggle-btn" id="lyricsToggleBtn">
+                <i class="fas fa-align-left"></i>
+                <span>Показать текст</span>
+            </button>
 
             <!-- Share Button -->
             <button class="share-btn" id="shareBtn">
                 <i class="fas fa-qrcode"></i>
                 <span>Поделиться QR-кодом</span>
             </button>
-        </div>
-
-        <!-- Lyrics Section -->
-        <div class="lyrics-section" id="lyricsSection">
-            <div class="lyrics-header">
-                <div class="lyrics-icon">
-                    <i class="fas fa-align-left"></i>
-                </div>
-                <div class="lyrics-title">Текст песни</div>
-            </div>
-            <div class="lyrics-container" id="lyricsContainer">
-                <!-- Lyrics will be inserted here -->
-            </div>
         </div>
     </div>
 
@@ -737,51 +797,11 @@
         /* ТЕКСТ ПЕСНИ С ВРЕМЕННЫМИ МЕТКАМИ */
         /* Формат: [секунды, "текст строки"] */
         const LYRICS = [
-    [0, "Ну ничего, скоро придёт время и мы займём достойные места в нашем городе"],
-    [9, "Да и не только в нём, поэтому хватит тебе, Серёжа, ерундой заниматься"],
-    [15, "Нам надо с тобой новую тему завернуть"],
-    [18, "Ей, е, воу"],
-    [20, "В Москве дожди, нас кроет волна, а"],
-    [22, "Куплю Kelli всех цветов - выберешь сама"],
-    [24, "А, меня еще никто так не волновал"],
-    [26, "Возьму тебе Continental и сяду за обнал"],
-    [28, "Музыкальный укус, я меняю свой вкус"],
-    [31, "Тебя не завернуть в попсу, это слишком много чувств"],
-    [33, "На нас мокрая одежда, она как тяжелый груз"],
-    [35, "Даже если я умру - я к тебе вернусь"],
-    [38, "Чтобы прожить всё заново, искать тебя заново"],
-    [41, "Встретить тебя заново, типо внепланово"],
-    [43, "Завтраки заново, закаты заново"],
-    [46, "Закроем глаза, чтобы проснуться пьяными"],
-    [48, "Опять всё заново, искать тебя заново"],
-    [50, "Встретить тебя заново, типо внепланово"],
-    [53, "Завтраки заново, закаты заново"],
-    [55, "Закроем глаза, чтобы проснуться пьяными"],
-    [57, ""],
-    [59, "Ты расслабляешь мои трапеции"],
-    [61, "Что судорожно качало традиционное детство"],
-    [63, "Я вообще молчу про то, что касается сердца"],
-    [66, "Но первый раз слышал такие знакомые герцы"],
-    [68, "Роди мне сына или дочь, или двоих сразу, а"],
-    [71, "Трепетные мысли, банальные фразы"],
-    [73, "Жуем в тачке корицу - это стало базой"],
-    [75, "Ты пропадаешь на день, два - это часть пазла"],
-    [77, "На my life airlines теперь крушение"],
-    [80, "Твои life airlines хотят туда, где теплее"],
-    [82, "One way ticket, мы взяли и полетели"],
-    [84, "Если я умру - мы встретимся в том же апреле"],
-    [87, ""],
-    [88, "Чтобы начать всё заново, искать тебя заново"],
-    [90, "Встретить тебя заново, типо внепланово"],
-    [92, "Завтраки заново, закаты заново"],
-    [95, "Закроем глаза, чтобы проснуться пьяными"],
-    [97, "Опять всё заново, искать тебя заново"],
-    [100, "Встретить тебя заново, типо внепланово"],
-    [102, "Завтраки заново, закаты заново"],
-    [104, "Закроем глаза, чтобы проснуться пьяными"],
-    [107, ""],        
-];
-
+            [0, "Первая строка"],
+            [5, "Вторая строка"],
+            [10, "Третья строка"],
+            [15, "Четвертая строка"]
+        ];
         /* ============================================ */
     </script>
 
@@ -805,7 +825,9 @@
         const canvas = document.getElementById('particles');
         const ctx = canvas.getContext('2d');
         const lyricsContainer = document.getElementById('lyricsContainer');
-        const lyricsSection = document.getElementById('lyricsSection');
+        const lyricsToggleBtn = document.getElementById('lyricsToggleBtn');
+        const posterContent = document.getElementById('posterContent');
+        const lyricsContent = document.getElementById('lyricsContent');
 
         // Set track info from config
         document.getElementById('trackName').textContent = CONFIG.trackName;
@@ -815,6 +837,24 @@
 
         // Set initial volume
         audio.volume = volumeSlider.value / 100;
+
+        // Lyrics toggle
+        let lyricsVisible = false;
+        lyricsToggleBtn.addEventListener('click', () => {
+            lyricsVisible = !lyricsVisible;
+            
+            if (lyricsVisible) {
+                posterContent.classList.add('hidden');
+                lyricsContent.classList.add('active');
+                lyricsToggleBtn.classList.add('active');
+                lyricsToggleBtn.innerHTML = '<i class="fas fa-image"></i><span>Показать постер</span>';
+            } else {
+                posterContent.classList.remove('hidden');
+                lyricsContent.classList.remove('active');
+                lyricsToggleBtn.classList.remove('active');
+                lyricsToggleBtn.innerHTML = '<i class="fas fa-align-left"></i><span>Показать текст</span>';
+            }
+        });
 
         // Initialize lyrics
         let currentLyricIndex = -1;
@@ -859,7 +899,9 @@
                     if (index === activeIndex) {
                         line.classList.add('active');
                         // Auto scroll to active line
-                        line.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        if (lyricsVisible) {
+                            line.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
                     } else if (index < activeIndex) {
                         line.classList.add('passed');
                     }
@@ -1019,6 +1061,8 @@
                 prevBtn.click();
             } else if (e.code === 'ArrowRight') {
                 nextBtn.click();
+            } else if (e.code === 'KeyL') {
+                lyricsToggleBtn.click();
             }
         });
     </script>
