@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Poster - Macan</title>
+    <title>AR Poster - Macan Заново</title>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <style>
@@ -133,6 +133,27 @@
             width: 100%;
             height: 100vh;
         }
+
+        /* Статус */
+        .ar-status {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(29, 185, 84, 0.9);
+            color: #000;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 1002;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .ar-status.visible {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -140,8 +161,13 @@
     <div class="ar-instructions">
         <h1>🎵 AR Music Poster</h1>
         <div class="camera-icon">📷</div>
-        <p><strong>Наведи камеру на постер Macan - "Заново"</strong></p>
-        <p>Разрешите доступ к камере для начала</p>
+        <p><strong>Наведи камеру на постер</strong></p>
+        <p>Macan - "Заново"</p>
+    </div>
+
+    <!-- Статус -->
+    <div class="ar-status" id="arStatus">
+        ✅ Постер найден!
     </div>
 
     <!-- Загрузка -->
@@ -166,8 +192,8 @@
         <!-- Камера -->
         <a-entity camera></a-entity>
 
-        <!-- Marker (используем Hiro пока, потом заменим на твой постер) -->
-        <a-marker preset="hiro" id="marker">
+        <!-- Custom Marker (твой постер) -->
+        <a-marker type="pattern" url="./pattern-poster.patt" id="marker">
             <!-- 3D текст над постером -->
             <a-text
                 value="MACAN\nЗАНОВО"
@@ -188,7 +214,7 @@
                 animation="property: rotation; to: 0 405 0; dur: 4000; easing: linear; loop: true"
             ></a-box>
 
-            <!-- Плоскость с логотипом/текстом -->
+            <!-- Плоскость с логотипом -->
             <a-plane
                 position="0 0 0"
                 rotation="-90 0 0"
@@ -204,6 +230,7 @@
         // Элементы
         const loading = document.getElementById('loading');
         const openPlayerBtn = document.getElementById('openPlayerBtn');
+        const arStatus = document.getElementById('arStatus');
         const marker = document.getElementById('marker');
         const arScene = document.getElementById('arScene');
 
@@ -216,8 +243,9 @@
 
         // Показать кнопку когда маркер найден
         marker.addEventListener('markerFound', () => {
-            console.log('Marker found!');
+            console.log('Poster marker found!');
             openPlayerBtn.classList.add('visible');
+            arStatus.classList.add('visible');
             
             // Вибрация если доступна
             if (navigator.vibrate) {
@@ -229,6 +257,7 @@
         marker.addEventListener('markerLost', () => {
             console.log('Marker lost!');
             openPlayerBtn.classList.remove('visible');
+            arStatus.classList.remove('visible');
         });
 
         // Открыть плеер
