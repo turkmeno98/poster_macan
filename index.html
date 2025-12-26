@@ -83,7 +83,6 @@
             position: relative;
             overflow: hidden;
             margin-bottom: 20px;
-            transition: all 0.4s ease;
         }
 
         .poster-card::before {
@@ -103,35 +102,8 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Hide/Show sections */
-        .poster-content {
-            transition: opacity 0.3s ease, transform 0.3s ease;
-        }
-
-        .poster-content.hidden {
-            opacity: 0;
-            transform: scale(0.95);
-            pointer-events: none;
-            position: absolute;
-        }
-
-        .lyrics-content {
-            transition: opacity 0.3s ease, transform 0.3s ease;
-            opacity: 0;
-            transform: scale(0.95);
-            pointer-events: none;
-            display: none;
-        }
-
-        .lyrics-content.active {
-            opacity: 1;
-            transform: scale(1);
-            pointer-events: auto;
-            display: block;
-        }
-
-        /* Album Cover */
-        .album-cover {
+        /* Album Cover / Lyrics Container */
+        .cover-lyrics-container {
             width: 100%;
             aspect-ratio: 1;
             border-radius: 8px;
@@ -142,6 +114,21 @@
             background: #000;
         }
 
+        .album-cover {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        .album-cover.hidden {
+            opacity: 0;
+            transform: scale(0.9);
+            pointer-events: none;
+        }
+
         .album-cover img {
             width: 100%;
             height: 100%;
@@ -150,14 +137,94 @@
             transition: transform 0.3s ease;
         }
 
-        .album-cover:hover img {
+        .album-cover:not(.hidden):hover img {
             transform: scale(1.05);
         }
 
-        /* Track Info */
+        /* Lyrics in Cover Area */
+        .lyrics-in-cover {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            padding: 30px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            opacity: 0;
+            transform: scale(0.9);
+            pointer-events: none;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            background: linear-gradient(145deg, #1a1a1a, #0f0f0f);
+        }
+
+        .lyrics-in-cover.active {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+
+        .lyrics-in-cover::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .lyrics-in-cover::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+
+        .lyrics-in-cover::-webkit-scrollbar-thumb {
+            background: var(--accent-color);
+            border-radius: 3px;
+        }
+
+        .lyrics-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding-top: 10px;
+        }
+
+        .lyric-line {
+            font-size: 15px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .lyric-line:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .lyric-line.active {
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 17px;
+            background: rgba(29, 185, 84, 0.15);
+            border-left: 3px solid var(--accent-color);
+            padding-left: 14px;
+            transform: translateX(3px);
+        }
+
+        .lyric-line.passed {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Track Info with Lyrics Button */
         .track-info {
             margin-bottom: 30px;
             text-align: left;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .track-text {
+            flex: 1;
         }
 
         .track-name {
@@ -173,6 +240,42 @@
             color: var(--text-secondary);
             font-weight: 400;
             letter-spacing: 0.3px;
+        }
+
+        /* Lyrics Toggle Button */
+        .lyrics-toggle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .lyrics-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        .lyrics-toggle.active {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+            color: #000;
+            box-shadow: 0 4px 12px rgba(29, 185, 84, 0.4);
+        }
+
+        .lyrics-toggle.active:hover {
+            background: #1ed760;
+            transform: scale(1.1);
         }
 
         /* Progress Bar */
@@ -391,120 +494,6 @@
             animation-play-state: paused;
         }
 
-        /* Lyrics in Card */
-        .lyrics-card-container {
-            max-height: 500px;
-            overflow-y: auto;
-            scroll-behavior: smooth;
-            padding-right: 10px;
-        }
-
-        .lyrics-card-container::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .lyrics-card-container::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 4px;
-        }
-
-        .lyrics-card-container::-webkit-scrollbar-thumb {
-            background: var(--accent-color);
-            border-radius: 4px;
-        }
-
-        .lyrics-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 24px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .lyrics-icon {
-            width: 36px;
-            height: 36px;
-            background: rgba(29, 185, 84, 0.15);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--accent-color);
-            font-size: 18px;
-        }
-
-        .lyrics-title {
-            font-size: 18px;
-            font-weight: 600;
-            letter-spacing: -0.3px;
-        }
-
-        .lyrics-container {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .lyric-line {
-            font-size: 16px;
-            line-height: 1.6;
-            color: var(--text-secondary);
-            transition: all 0.3s ease;
-            padding: 8px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        .lyric-line:hover {
-            background: rgba(255, 255, 255, 0.03);
-        }
-
-        .lyric-line.active {
-            color: var(--text-primary);
-            font-weight: 600;
-            font-size: 18px;
-            background: rgba(29, 185, 84, 0.1);
-            border-left: 3px solid var(--accent-color);
-            padding-left: 16px;
-            transform: translateX(4px);
-        }
-
-        .lyric-line.passed {
-            color: rgba(255, 255, 255, 0.4);
-        }
-
-        /* Lyrics Toggle Button */
-        .lyrics-toggle-btn {
-            width: 100%;
-            padding: 14px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 30px;
-            color: var(--text-primary);
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.2s ease;
-            margin-bottom: 12px;
-        }
-
-        .lyrics-toggle-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: var(--accent-color);
-            transform: translateY(-2px);
-        }
-
-        .lyrics-toggle-btn.active {
-            background: rgba(29, 185, 84, 0.15);
-            border-color: var(--accent-color);
-            color: var(--accent-color);
-        }
-
         /* QR Modal */
         .qr-modal {
             display: none;
@@ -588,6 +577,7 @@
             justify-content: center;
             gap: 8px;
             transition: all 0.2s ease;
+            margin-top: 20px;
         }
 
         .share-btn:hover {
@@ -611,11 +601,17 @@
             }
 
             .lyric-line {
-                font-size: 15px;
+                font-size: 14px;
             }
 
             .lyric-line.active {
-                font-size: 17px;
+                font-size: 16px;
+            }
+
+            .lyrics-toggle {
+                width: 36px;
+                height: 36px;
+                font-size: 14px;
             }
         }
 
@@ -667,94 +663,85 @@
     <!-- Main Container -->
     <div class="container">
         <div class="poster-card">
-            <!-- Poster Content -->
-            <div class="poster-content" id="posterContent">
+            <!-- Cover / Lyrics Container -->
+            <div class="cover-lyrics-container">
                 <!-- Album Cover -->
-                <div class="album-cover">
-                    <img id="albumCover" src="poster.png" alt="Album Cover">
+                <div class="album-cover" id="albumCover">
+                    <img src="poster.png" alt="Album Cover">
                 </div>
 
-                <!-- Track Info -->
-                <div class="track-info">
-                    <div class="track-name" id="trackName">Загрузка...</div>
-                    <div class="artist-name" id="artistName">Загрузка...</div>
-                </div>
-
-                <!-- Progress -->
-                <div class="progress-section">
-                    <div class="progress-bar" id="progressBar">
-                        <div class="progress-fill" id="progressFill"></div>
-                    </div>
-                    <div class="time-info">
-                        <span id="currentTime">0:00</span>
-                        <span id="duration">0:00</span>
-                    </div>
-                </div>
-
-                <!-- Controls -->
-                <div class="controls">
-                    <button class="control-btn" id="prevBtn" title="Назад 10 сек">
-                        <i class="fas fa-backward"></i>
-                    </button>
-                    <button class="control-btn play-btn" id="playBtn" title="Воспроизвести">
-                        <i class="fas fa-play"></i>
-                    </button>
-                    <button class="control-btn" id="nextBtn" title="Вперед 10 сек">
-                        <i class="fas fa-forward"></i>
-                    </button>
-                </div>
-
-                <!-- Volume -->
-                <div class="volume-section">
-                    <i class="fas fa-volume-up volume-icon" id="volumeIcon"></i>
-                    <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="70">
-                </div>
-
-                <!-- Spotify Code Visualization -->
-                <div class="spotify-code paused" id="spotifyCode">
-                    <div class="code-icon">
-                        <i class="fab fa-spotify"></i>
-                    </div>
-                    <div class="code-bars">
-                        <div class="bar"></div>
-                        <div class="bar"></div>
-                        <div class="bar"></div>
-                        <div class="bar"></div>
-                        <div class="bar"></div>
-                        <div class="bar"></div>
-                        <div class="bar"></div>
-                        <div class="bar"></div>
-                        <div class="bar"></div>
-                        <div class="bar"></div>
-                        <div class="bar"></div>
-                        <div class="bar"></div>
-                        <div class="bar"></div>
-                        <div class="bar"></div>
-                        <div class="bar"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Lyrics Content (hidden by default) -->
-            <div class="lyrics-content" id="lyricsContent">
-                <div class="lyrics-header">
-                    <div class="lyrics-icon">
-                        <i class="fas fa-align-left"></i>
-                    </div>
-                    <div class="lyrics-title">Текст песни</div>
-                </div>
-                <div class="lyrics-card-container">
+                <!-- Lyrics in Cover Area -->
+                <div class="lyrics-in-cover" id="lyricsInCover">
                     <div class="lyrics-container" id="lyricsContainer">
                         <!-- Lyrics will be inserted here -->
                     </div>
                 </div>
             </div>
 
-            <!-- Lyrics Toggle Button -->
-            <button class="lyrics-toggle-btn" id="lyricsToggleBtn">
-                <i class="fas fa-align-left"></i>
-                <span>Показать текст</span>
-            </button>
+            <!-- Track Info with Lyrics Button -->
+            <div class="track-info">
+                <div class="track-text">
+                    <div class="track-name" id="trackName">Загрузка...</div>
+                    <div class="artist-name" id="artistName">Загрузка...</div>
+                </div>
+                <button class="lyrics-toggle" id="lyricsToggle" title="Показать текст">
+                    Т
+                </button>
+            </div>
+
+            <!-- Progress -->
+            <div class="progress-section">
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="time-info">
+                    <span id="currentTime">0:00</span>
+                    <span id="duration">0:00</span>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="controls">
+                <button class="control-btn" id="prevBtn" title="Назад 10 сек">
+                    <i class="fas fa-backward"></i>
+                </button>
+                <button class="control-btn play-btn" id="playBtn" title="Воспроизвести">
+                    <i class="fas fa-play"></i>
+                </button>
+                <button class="control-btn" id="nextBtn" title="Вперед 10 сек">
+                    <i class="fas fa-forward"></i>
+                </button>
+            </div>
+
+            <!-- Volume -->
+            <div class="volume-section">
+                <i class="fas fa-volume-up volume-icon" id="volumeIcon"></i>
+                <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="70">
+            </div>
+
+            <!-- Spotify Code Visualization -->
+            <div class="spotify-code paused" id="spotifyCode">
+                <div class="code-icon">
+                    <i class="fab fa-spotify"></i>
+                </div>
+                <div class="code-bars">
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                </div>
+            </div>
 
             <!-- Share Button -->
             <button class="share-btn" id="shareBtn">
@@ -797,10 +784,46 @@
         /* ТЕКСТ ПЕСНИ С ВРЕМЕННЫМИ МЕТКАМИ */
         /* Формат: [секунды, "текст строки"] */
         const LYRICS = [
-            [0, "Первая строка"],
-            [5, "Вторая строка"],
-            [10, "Третья строка"],
-            [15, "Четвертая строка"]
+            [0, "Ну ничего, скоро придёт время и мы займём достойные места в нашем городе"],
+            [9, "Да и не только в нём, поэтому хватит тебе, Серёжа, ерундой заниматься"],
+            [15, "Нам надо с тобой новую тему завернуть"],
+            [18, "Ей, е, воу"],
+            [20, "В Москве дожди, нас кроет волна, а"],
+            [22, "Куплю Kelli всех цветов - выберешь сама"],
+            [24, "А, меня еще никто так не волновал"],
+            [26, "Возьму тебе Continental и сяду за обнал"],
+            [28, "Музыкальный укус, я меняю свой вкус"],
+            [31, "Тебя не завернуть в попсу, это слишком много чувств"],
+            [33, "На нас мокрая одежда, она как тяжелый груз"],
+            [35, "Даже если я умру - я к тебе вернусь"],
+            [38, "Чтобы прожить всё заново, искать тебя заново"],
+            [41, "Встретить тебя заново, типо внепланово"],
+            [43, "Завтраки заново, закаты заново"],
+            [46, "Закроем глаза, чтобы проснуться пьяными"],
+            [48, "Опять всё заново, искать тебя заново"],
+            [50, "Встретить тебя заново, типо внепланово"],
+            [53, "Завтраки заново, закаты заново"],
+            [55, "Закроем глаза, чтобы проснуться пьяными"],
+            [59, "Ты расслабляешь мои трапеции"],
+            [61, "Что судорожно качало традиционное детство"],
+            [63, "Я вообще молчу про то, что касается сердца"],
+            [66, "Но первый раз слышал такие знакомые герцы"],
+            [68, "Роди мне сына или дочь, или двоих сразу, а"],
+            [71, "Трепетные мысли, банальные фразы"],
+            [73, "Жуем в тачке корицу - это стало базой"],
+            [75, "Ты пропадаешь на день, два - это часть пазла"],
+            [77, "На my life airlines теперь крушение"],
+            [80, "Твои life airlines хотят туда, где теплее"],
+            [82, "One way ticket, мы взяли и полетели"],
+            [84, "Если я умру - мы встретимся в том же апреле"],
+            [88, "Чтобы начать всё заново, искать тебя заново"],
+            [90, "Встретить тебя заново, типо внепланово"],
+            [92, "Завтраки заново, закаты заново"],
+            [95, "Закроем глаза, чтобы проснуться пьяными"],
+            [97, "Опять всё заново, искать тебя заново"],
+            [100, "Встретить тебя заново, типо внепланово"],
+            [102, "Завтраки заново, закаты заново"],
+            [104, "Закроем глаза, чтобы проснуться пьяными"]
         ];
         /* ============================================ */
     </script>
@@ -825,14 +848,13 @@
         const canvas = document.getElementById('particles');
         const ctx = canvas.getContext('2d');
         const lyricsContainer = document.getElementById('lyricsContainer');
-        const lyricsToggleBtn = document.getElementById('lyricsToggleBtn');
-        const posterContent = document.getElementById('posterContent');
-        const lyricsContent = document.getElementById('lyricsContent');
+        const lyricsToggle = document.getElementById('lyricsToggle');
+        const albumCover = document.getElementById('albumCover');
+        const lyricsInCover = document.getElementById('lyricsInCover');
 
         // Set track info from config
         document.getElementById('trackName').textContent = CONFIG.trackName;
         document.getElementById('artistName').textContent = CONFIG.artistName;
-        document.getElementById('albumCover').src = CONFIG.albumCover;
         audio.src = CONFIG.audioFile;
 
         // Set initial volume
@@ -840,19 +862,19 @@
 
         // Lyrics toggle
         let lyricsVisible = false;
-        lyricsToggleBtn.addEventListener('click', () => {
+        lyricsToggle.addEventListener('click', () => {
             lyricsVisible = !lyricsVisible;
             
             if (lyricsVisible) {
-                posterContent.classList.add('hidden');
-                lyricsContent.classList.add('active');
-                lyricsToggleBtn.classList.add('active');
-                lyricsToggleBtn.innerHTML = '<i class="fas fa-image"></i><span>Показать постер</span>';
+                albumCover.classList.add('hidden');
+                lyricsInCover.classList.add('active');
+                lyricsToggle.classList.add('active');
+                lyricsToggle.title = 'Показать обложку';
             } else {
-                posterContent.classList.remove('hidden');
-                lyricsContent.classList.remove('active');
-                lyricsToggleBtn.classList.remove('active');
-                lyricsToggleBtn.innerHTML = '<i class="fas fa-align-left"></i><span>Показать текст</span>';
+                albumCover.classList.remove('hidden');
+                lyricsInCover.classList.remove('active');
+                lyricsToggle.classList.remove('active');
+                lyricsToggle.title = 'Показать текст';
             }
         });
 
@@ -1062,7 +1084,7 @@
             } else if (e.code === 'ArrowRight') {
                 nextBtn.click();
             } else if (e.code === 'KeyL') {
-                lyricsToggleBtn.click();
+                lyricsToggle.click();
             }
         });
     </script>
